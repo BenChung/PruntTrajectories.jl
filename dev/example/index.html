@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Example · PruntTrajectories.jl</title><meta name="title" content="Example · PruntTrajectories.jl"/><meta property="og:title" content="Example · PruntTrajectories.jl"/><meta property="twitter:title" content="Example · PruntTrajectories.jl"/><meta name="description" content="Documentation for PruntTrajectories.jl."/><meta property="og:description" content="Documentation for PruntTrajectories.jl."/><meta property="twitter:description" content="Documentation for PruntTrajectories.jl."/><meta property="og:url" content="https://benchung.github.io/PruntTrajectories.jl/example/"/><meta property="twitter:url" content="https://benchung.github.io/PruntTrajectories.jl/example/"/><link rel="canonical" href="https://benchung.github.io/PruntTrajectories.jl/example/"/><script data-outdated-warner src="../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../search_index.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../">PruntTrajectories.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../">Home</a></li><li class="is-active"><a class="tocitem" href>Example</a><ul class="internal"><li><a class="tocitem" href="#Plotting-All-Derivatives"><span>Plotting All Derivatives</span></a></li><li><a class="tocitem" href="#Querying-Profile-at-Specific-Times"><span>Querying Profile at Specific Times</span></a></li><li><a class="tocitem" href="#Using-distance_at_time_with_accel_flag"><span>Using <code>distance_at_time_with_accel_flag</code></span></a></li></ul></li><li><a class="tocitem" href="../api/">API Reference</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>Example</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Example</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/BenChung/PruntTrajectories.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/BenChung/PruntTrajectories.jl/blob/main/docs/src/example.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Example"><a class="docs-heading-anchor" href="#Example">Example</a><a id="Example-1"></a><a class="docs-heading-anchor-permalink" href="#Example" title="Permalink"></a></h1><p>This example generates a trajectory and plots all kinematic derivatives.</p><pre><code class="language-julia hljs">using PruntTrajectories
+using Plots
+
+# Define kinematic limits
+accel_max = 50.0    # Maximum acceleration
+jerk_max = 100.0    # Maximum jerk
+snap_max = 200.0    # Maximum snap
+crackle_max = 500.0 # Maximum crackle
+
+# Trajectory parameters
+start_vel = 10.0    # Starting velocity
+max_vel = 80.0      # Maximum allowed velocity
+end_vel = 5.0       # Ending velocity
+distance = 500.0    # Total distance to travel
+
+# Generate the optimal profile
+profile = optimal_full_profile(
+    start_vel, max_vel, end_vel, distance,
+    accel_max, jerk_max, snap_max, crackle_max
+)
+
+println(&quot;Total time: &quot;, total_time(profile), &quot; s&quot;)
+println(&quot;Acceleration phase: &quot;, total_time(profile.accel), &quot; s&quot;)
+println(&quot;Coast phase: &quot;, profile.coast, &quot; s&quot;)
+println(&quot;Deceleration phase: &quot;, total_time(profile.decel), &quot; s&quot;)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Total time: 8.916878422892516 s
+Acceleration phase: 2.909708610051304 s
+Coast phase: 3.033557213385058 s
+Deceleration phase: 2.9736125994561546 s</code></pre><h2 id="Plotting-All-Derivatives"><a class="docs-heading-anchor" href="#Plotting-All-Derivatives">Plotting All Derivatives</a><a id="Plotting-All-Derivatives-1"></a><a class="docs-heading-anchor-permalink" href="#Plotting-All-Derivatives" title="Permalink"></a></h2><pre><code class="language-julia hljs"># Generate time samples
+t_total = total_time(profile)
+n_points = 1000
+times = range(0, t_total * 0.9999, length=n_points)
+
+# Compute all derivatives at each time point
+distances = [distance_at_time(profile, t, crackle_max, start_vel) for t in times]
+velocities = [velocity_at_time(profile, t, crackle_max, start_vel) for t in times]
+accelerations = [acceleration_at_time(profile, t, crackle_max) for t in times]
+jerks = [jerk_at_time(profile, t, crackle_max) for t in times]
+snaps = [snap_at_time(profile, t, crackle_max) for t in times]
+crackles = [crackle_at_time(profile, t, crackle_max) for t in times]</code></pre><p><img src="../trajectory_derivatives.svg" alt="Trajectory Derivatives"/></p><h2 id="Querying-Profile-at-Specific-Times"><a class="docs-heading-anchor" href="#Querying-Profile-at-Specific-Times">Querying Profile at Specific Times</a><a id="Querying-Profile-at-Specific-Times-1"></a><a class="docs-heading-anchor-permalink" href="#Querying-Profile-at-Specific-Times" title="Permalink"></a></h2><pre><code class="language-julia hljs"># Query at the midpoint
+t_mid = t_total / 2
+
+println(&quot;At t = &quot;, t_mid, &quot; s:&quot;)
+println(&quot;  Distance: &quot;, distance_at_time(profile, t_mid, crackle_max, start_vel))
+println(&quot;  Velocity: &quot;, velocity_at_time(profile, t_mid, crackle_max, start_vel))
+println(&quot;  Acceleration: &quot;, acceleration_at_time(profile, t_mid, crackle_max))
+println(&quot;  Jerk: &quot;, jerk_at_time(profile, t_mid, crackle_max))
+println(&quot;  Snap: &quot;, snap_at_time(profile, t_mid, crackle_max))
+println(&quot;  Crackle: &quot;, crackle_at_time(profile, t_mid, crackle_max))</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">At t = 4.458439211446258 s:
+  Distance: 254.83533556390503
+  Velocity: 80.0
+  Acceleration: 0.0
+  Jerk: 0.0
+  Snap: 0.0
+  Crackle: 0.0</code></pre><h2 id="Using-distance_at_time_with_accel_flag"><a class="docs-heading-anchor" href="#Using-distance_at_time_with_accel_flag">Using <code>distance_at_time_with_accel_flag</code></a><a id="Using-distance_at_time_with_accel_flag-1"></a><a class="docs-heading-anchor-permalink" href="#Using-distance_at_time_with_accel_flag" title="Permalink"></a></h2><p>The <a href="../api/#PruntTrajectories.distance_at_time_with_accel_flag"><code>distance_at_time_with_accel_flag</code></a> function returns both the distance and a boolean indicating whether the query time is past the acceleration phase:</p><pre><code class="language-julia hljs"># During acceleration
+dist1, past_accel1 = distance_at_time_with_accel_flag(profile, 0.1, crackle_max, start_vel)
+println(&quot;At t=0.1s: distance=&quot;, round(dist1, digits=3), &quot;, past_accel=&quot;, past_accel1)
+
+# During coast/decel
+t_late = total_time(profile.accel) + 0.1
+dist2, past_accel2 = distance_at_time_with_accel_flag(profile, t_late, crackle_max, start_vel)
+println(&quot;At t=&quot;, round(t_late, digits=3), &quot;s: distance=&quot;, round(dist2, digits=3), &quot;, past_accel=&quot;, past_accel2)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">At t=0.1s: distance=1.0, past_accel=false
+At t=3.01s: distance=138.937, past_accel=true</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../">« Home</a><a class="docs-footer-nextpage" href="../api/">API Reference »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.16.1 on <span class="colophon-date" title="Tuesday 2 December 2025 16:44">Tuesday 2 December 2025</span>. Using Julia version 1.11.7.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
