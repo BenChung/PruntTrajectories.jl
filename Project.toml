@@ -1,0 +1,13 @@
+name = "PruntTrajectories"
+uuid = "a173988a-42c2-423f-85cf-3f3cb1802648"
+authors = ["Benjamin Chung <benjamin.chung@juliahub.com> and contributors"]
+version = "1.0.0-DEV"
+
+[compat]
+julia = "1.11"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
