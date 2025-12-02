@@ -17,79 +17,79 @@ using Random
         @test p_default.t4 == 0.0
     end
 
-    @testset "Total_Time" begin
+    @testset "total_time" begin
         p = FeedrateProfileTimes(0.1, 0.2, 0.3, 0.4)
-        @test Total_Time(p) == 8.0 * 0.1 + 4.0 * 0.2 + 2.0 * 0.3 + 0.4
-        @test Total_Time(p) == 2.6
+        @test total_time(p) == 8.0 * 0.1 + 4.0 * 0.2 + 2.0 * 0.3 + 0.4
+        @test total_time(p) == 2.6
 
         profile = FeedrateProfile(p, 1.0, p)
-        @test Total_Time(profile) == 2.6 + 1.0 + 2.6
+        @test total_time(profile) == 2.6 + 1.0 + 2.6
     end
 
-    @testset "Fast_Velocity_At_Max_Time" begin
+    @testset "fast_velocity_at_max_time" begin
         p = FeedrateProfileTimes(0.1, 0.2, 0.3, 0.4)
-        v = Fast_Velocity_At_Max_Time(p, 1000.0, 10.0)
+        v = fast_velocity_at_max_time(p, 1000.0, 10.0)
         @test v == 41.5
     end
 
-    @testset "Fast_Distance_At_Max_Time" begin
+    @testset "fast_distance_at_max_time" begin
         p = FeedrateProfileTimes(0.1, 0.2, 0.3, 0.4)
-        d = Fast_Distance_At_Max_Time(p, 1000.0, 10.0)
+        d = fast_distance_at_max_time(p, 1000.0, 10.0)
         @test d == 66.95
     end
 
-    @testset "Crackle_At_Time (FeedrateProfileTimes)" begin
+    @testset "crackle_at_time (FeedrateProfileTimes)" begin
         p = FeedrateProfileTimes(0.1, 0.2, 0.3, 0.4)
         Cm = 1000.0
 
         # Stage 1: T < T1 (0.1) => Cm
-        @test Crackle_At_Time(p, 0.05, Cm) == Cm
+        @test crackle_at_time(p, 0.05, Cm) == Cm
         # Stage 2: T1 <= T < T1+T2 (0.3) => 0.0
-        @test Crackle_At_Time(p, 0.15, Cm) == 0.0
-        @test Crackle_At_Time(p, 0.25, Cm) == 0.0
+        @test crackle_at_time(p, 0.15, Cm) == 0.0
+        @test crackle_at_time(p, 0.25, Cm) == 0.0
         # Stage 3: T1+T2 <= T < 2*T1+T2 (0.5) => -Cm
-        @test Crackle_At_Time(p, 0.35, Cm) == -Cm
+        @test crackle_at_time(p, 0.35, Cm) == -Cm
     end
 
-    @testset "Snap_At_Time (FeedrateProfileTimes)" begin
+    @testset "snap_at_time (FeedrateProfileTimes)" begin
         p = FeedrateProfileTimes(0.1, 0.2, 0.3, 0.4)
         Cm = 1000.0
 
-        snap = Snap_At_Time(p, 0.05, Cm)
+        snap = snap_at_time(p, 0.05, Cm)
         @test snap == Cm * 0.05
     end
 
-    @testset "Jerk_At_Time (FeedrateProfileTimes)" begin
+    @testset "jerk_at_time (FeedrateProfileTimes)" begin
         p = FeedrateProfileTimes(0.1, 0.2, 0.3, 0.4)
         Cm = 1000.0
 
-        jerk = Jerk_At_Time(p, 0.05, Cm)
+        jerk = jerk_at_time(p, 0.05, Cm)
         @test jerk ≈ Cm * 0.05^2 / 2.0
     end
 
-    @testset "Acceleration_At_Time (FeedrateProfileTimes)" begin
+    @testset "acceleration_at_time (FeedrateProfileTimes)" begin
         p = FeedrateProfileTimes(0.1, 0.2, 0.3, 0.4)
         Cm = 1000.0
 
-        accel = Acceleration_At_Time(p, 0.05, Cm)
+        accel = acceleration_at_time(p, 0.05, Cm)
         @test accel ≈ Cm * 0.05^3 / 6.0
     end
 
-    @testset "Velocity_At_Time (FeedrateProfileTimes)" begin
+    @testset "velocity_at_time (FeedrateProfileTimes)" begin
         p = FeedrateProfileTimes(0.1, 0.2, 0.3, 0.4)
         Cm = 1000.0
         start_vel = 10.0
 
-        vel = Velocity_At_Time(p, 0.05, Cm, start_vel)
+        vel = velocity_at_time(p, 0.05, Cm, start_vel)
         @test vel ≈ start_vel + Cm * 0.05^4 / 24.0
     end
 
-    @testset "Distance_At_Time (FeedrateProfileTimes)" begin
+    @testset "distance_at_time (FeedrateProfileTimes)" begin
         p = FeedrateProfileTimes(0.1, 0.2, 0.3, 0.4)
         Cm = 1000.0
         start_vel = 10.0
 
-        dist = Distance_At_Time(p, 0.05, Cm, start_vel)
+        dist = distance_at_time(p, 0.05, Cm, start_vel)
         @test dist ≈ start_vel * 0.05 + Cm * 0.05^5 / 120.0
     end
 
@@ -99,57 +99,57 @@ using Random
         Cm = 1000.0
         start_vel = 10.0
 
-        @test Crackle_At_Time(profile, 0.05, Cm) == Cm
-        @test Snap_At_Time(profile, 0.05, Cm) == Cm * 0.05
-        @test Jerk_At_Time(profile, 0.05, Cm) ≈ Cm * 0.05^2 / 2.0
-        @test Acceleration_At_Time(profile, 0.05, Cm) ≈ Cm * 0.05^3 / 6.0
+        @test crackle_at_time(profile, 0.05, Cm) == Cm
+        @test snap_at_time(profile, 0.05, Cm) == Cm * 0.05
+        @test jerk_at_time(profile, 0.05, Cm) ≈ Cm * 0.05^2 / 2.0
+        @test acceleration_at_time(profile, 0.05, Cm) ≈ Cm * 0.05^3 / 6.0
 
-        @test Crackle_At_Time(profile, 3.0, Cm) == 0.0
-        @test Snap_At_Time(profile, 3.0, Cm) == 0.0
-        @test Jerk_At_Time(profile, 3.0, Cm) == 0.0
-        @test Acceleration_At_Time(profile, 3.0, Cm) == 0.0
+        @test crackle_at_time(profile, 3.0, Cm) == 0.0
+        @test snap_at_time(profile, 3.0, Cm) == 0.0
+        @test jerk_at_time(profile, 3.0, Cm) == 0.0
+        @test acceleration_at_time(profile, 3.0, Cm) == 0.0
     end
 
-    @testset "Optimal_Profile_For_Delta_V" begin
-        profile = Optimal_Profile_For_Delta_V(100.0, 50.0, 100.0, 200.0, 500.0)
+    @testset "optimal_profile_for_delta_v" begin
+        profile = optimal_profile_for_delta_v(100.0, 50.0, 100.0, 200.0, 500.0)
         @test profile isa FeedrateProfileTimes
         @test profile.t1 > 0.0
         @test profile.t4 > 0.0
 
-        achieved_delta_v = Fast_Velocity_At_Max_Time(profile, 500.0, 0.0)
+        achieved_delta_v = fast_velocity_at_max_time(profile, 500.0, 0.0)
         @test achieved_delta_v ≈ 100.0 atol=1e-10
     end
 
-    @testset "Optimal_Profile_For_Distance" begin
-        profile = Optimal_Profile_For_Distance(0.0, 1000.0, 50.0, 100.0, 200.0, 500.0)
+    @testset "optimal_profile_for_distance" begin
+        profile = optimal_profile_for_distance(0.0, 1000.0, 50.0, 100.0, 200.0, 500.0)
         @test profile isa FeedrateProfileTimes
 
-        achieved_distance = Fast_Distance_At_Max_Time(profile, 500.0, 0.0)
+        achieved_distance = fast_distance_at_max_time(profile, 500.0, 0.0)
         @test achieved_distance ≈ 1000.0 atol=1e-10
     end
 
-    @testset "Optimal_Full_Profile" begin
-        full_profile = Optimal_Full_Profile(0.0, 100.0, 0.0, 1000.0, 50.0, 100.0, 200.0, 500.0)
+    @testset "optimal_full_profile" begin
+        full_profile = optimal_full_profile(0.0, 100.0, 0.0, 1000.0, 50.0, 100.0, 200.0, 500.0)
         @test full_profile isa FeedrateProfile
         @test full_profile.coast >= 0.0
 
-        @test_throws ErrorException Optimal_Full_Profile(150.0, 100.0, 0.0, 1000.0, 50.0, 100.0, 200.0, 500.0)
-        @test_throws ErrorException Optimal_Full_Profile(0.0, 100.0, 150.0, 1000.0, 50.0, 100.0, 200.0, 500.0)
+        @test_throws ErrorException optimal_full_profile(150.0, 100.0, 0.0, 1000.0, 50.0, 100.0, 200.0, 500.0)
+        @test_throws ErrorException optimal_full_profile(0.0, 100.0, 150.0, 1000.0, 50.0, 100.0, 200.0, 500.0)
 
-        zero_profile = Optimal_Full_Profile(0.0, 100.0, 0.0, 0.0, 50.0, 100.0, 200.0, 500.0)
-        @test Total_Time(zero_profile) == 0.0
+        zero_profile = optimal_full_profile(0.0, 100.0, 0.0, 0.0, 50.0, 100.0, 200.0, 500.0)
+        @test total_time(zero_profile) == 0.0
     end
 
-    @testset "Distance_At_Time_With_Accel_Flag" begin
+    @testset "distance_at_time_with_accel_flag" begin
         times = FeedrateProfileTimes(0.1, 0.2, 0.3, 0.4)
         profile = FeedrateProfile(times, 1.0, times)
         Cm = 1000.0
         start_vel = 10.0
 
-        dist1, flag1 = Distance_At_Time_With_Accel_Flag(profile, 0.5, Cm, start_vel)
+        dist1, flag1 = distance_at_time_with_accel_flag(profile, 0.5, Cm, start_vel)
         @test flag1 == false
 
-        dist2, flag2 = Distance_At_Time_With_Accel_Flag(profile, 3.0, Cm, start_vel)
+        dist2, flag2 = distance_at_time_with_accel_flag(profile, 3.0, Cm, start_vel)
         @test flag2 == true
     end
 
@@ -157,14 +157,14 @@ using Random
         p = FeedrateProfileTimes(0.1, 0.2, 0.3, 0.4)
         Cm = 1000.0
         start_vel = 10.0
-        t_max = Total_Time(p)
+        t_max = total_time(p)
 
-        fast_vel = Fast_Velocity_At_Max_Time(p, Cm, start_vel)
-        slow_vel = Velocity_At_Time(p, t_max, Cm, start_vel)
+        fast_vel = fast_velocity_at_max_time(p, Cm, start_vel)
+        slow_vel = velocity_at_time(p, t_max, Cm, start_vel)
         @test fast_vel ≈ slow_vel
 
-        fast_dist = Fast_Distance_At_Max_Time(p, Cm, start_vel)
-        slow_dist = Distance_At_Time(p, t_max, Cm, start_vel)
+        fast_dist = fast_distance_at_max_time(p, Cm, start_vel)
+        slow_dist = distance_at_time(p, t_max, Cm, start_vel)
         @test fast_dist ≈ slow_dist
     end
 
@@ -181,7 +181,7 @@ using Random
 
         # Test derivative integration consistency for a given profile
         function test_derivative_integration(p::FeedrateProfileTimes, Cm, start_vel; n_points=10000)
-            t_max = Total_Time(p)
+            t_max = total_time(p)
             if t_max == 0
                 return true
             end
@@ -193,9 +193,9 @@ using Random
             for frac in test_fracs
                 t_test = frac * t_max
                 n_test = max(100, round(Int, n_points * frac))
-                integrated = Snap_At_Time(p, 0.0, Cm) +
-                             integrate_trapezoidal(t -> Crackle_At_Time(p, t, Cm), t_test, n_test)
-                analytical = Snap_At_Time(p, t_test, Cm)
+                integrated = snap_at_time(p, 0.0, Cm) +
+                             integrate_trapezoidal(t -> crackle_at_time(p, t, Cm), t_test, n_test)
+                analytical = snap_at_time(p, t_test, Cm)
                 @test isapprox(integrated, analytical, rtol=0.02, atol=Cm * t_max * 0.01)
             end
 
@@ -203,9 +203,9 @@ using Random
             for frac in test_fracs
                 t_test = frac * t_max
                 n_test = max(100, round(Int, n_points * frac))
-                integrated = Jerk_At_Time(p, 0.0, Cm) +
-                             integrate_trapezoidal(t -> Snap_At_Time(p, t, Cm), t_test, n_test)
-                analytical = Jerk_At_Time(p, t_test, Cm)
+                integrated = jerk_at_time(p, 0.0, Cm) +
+                             integrate_trapezoidal(t -> snap_at_time(p, t, Cm), t_test, n_test)
+                analytical = jerk_at_time(p, t_test, Cm)
                 @test isapprox(integrated, analytical, rtol=0.02, atol=Cm * t_max^2 * 0.01)
             end
 
@@ -213,9 +213,9 @@ using Random
             for frac in test_fracs
                 t_test = frac * t_max
                 n_test = max(100, round(Int, n_points * frac))
-                integrated = Acceleration_At_Time(p, 0.0, Cm) +
-                             integrate_trapezoidal(t -> Jerk_At_Time(p, t, Cm), t_test, n_test)
-                analytical = Acceleration_At_Time(p, t_test, Cm)
+                integrated = acceleration_at_time(p, 0.0, Cm) +
+                             integrate_trapezoidal(t -> jerk_at_time(p, t, Cm), t_test, n_test)
+                analytical = acceleration_at_time(p, t_test, Cm)
                 @test isapprox(integrated, analytical, rtol=0.02, atol=Cm * t_max^3 * 0.01)
             end
 
@@ -223,9 +223,9 @@ using Random
             for frac in [0.25, 0.5, 0.75, 1.0]
                 t_test = frac * t_max
                 n_test = max(100, round(Int, n_points * frac))
-                integrated = Velocity_At_Time(p, 0.0, Cm, start_vel) +
-                             integrate_trapezoidal(t -> Acceleration_At_Time(p, t, Cm), t_test, n_test)
-                analytical = Velocity_At_Time(p, t_test, Cm, start_vel)
+                integrated = velocity_at_time(p, 0.0, Cm, start_vel) +
+                             integrate_trapezoidal(t -> acceleration_at_time(p, t, Cm), t_test, n_test)
+                analytical = velocity_at_time(p, t_test, Cm, start_vel)
                 @test isapprox(integrated, analytical, rtol=0.01, atol=max(1.0, abs(start_vel) * 0.01))
             end
 
@@ -233,16 +233,16 @@ using Random
             for frac in [0.25, 0.5, 0.75, 1.0]
                 t_test = frac * t_max
                 n_test = max(100, round(Int, n_points * frac))
-                integrated = Distance_At_Time(p, 0.0, Cm, start_vel) +
-                             integrate_trapezoidal(t -> Velocity_At_Time(p, t, Cm, start_vel), t_test, n_test)
-                analytical = Distance_At_Time(p, t_test, Cm, start_vel)
+                integrated = distance_at_time(p, 0.0, Cm, start_vel) +
+                             integrate_trapezoidal(t -> velocity_at_time(p, t, Cm, start_vel), t_test, n_test)
+                analytical = distance_at_time(p, t_test, Cm, start_vel)
                 @test isapprox(integrated, analytical, rtol=0.01, atol=max(1.0, abs(start_vel) * t_max * 0.01))
             end
         end
 
         # Test full profile derivative integration
         function test_full_profile_integration(profile::FeedrateProfile, Cm, start_vel; n_points=10000)
-            t_max = Total_Time(profile)
+            t_max = total_time(profile)
             if t_max == 0
                 return true
             end
@@ -250,9 +250,9 @@ using Random
             for frac in [0.25, 0.5, 0.75, 0.99]  # Use 0.99 instead of 1.0 to avoid floating point boundary issues
                 t_test = frac * t_max
                 n_test = max(100, round(Int, n_points * frac))
-                integrated = Distance_At_Time(profile, 0.0, Cm, start_vel) +
-                             integrate_trapezoidal(t -> Velocity_At_Time(profile, t, Cm, start_vel), t_test, n_test)
-                analytical = Distance_At_Time(profile, t_test, Cm, start_vel)
+                integrated = distance_at_time(profile, 0.0, Cm, start_vel) +
+                             integrate_trapezoidal(t -> velocity_at_time(profile, t, Cm, start_vel), t_test, n_test)
+                analytical = distance_at_time(profile, t_test, Cm, start_vel)
                 @test isapprox(integrated, analytical, rtol=0.01, atol=max(1.0, abs(start_vel) * t_max * 0.01))
             end
         end
@@ -287,28 +287,28 @@ using Random
 
         # Test that velocity and distance constraints are met
         function test_velocity_and_distance(profile::FeedrateProfile, Cm, start_vel, max_vel, end_vel, distance; n_samples=1000)
-            t_max = Total_Time(profile)
+            t_max = total_time(profile)
             if t_max == 0
                 @test distance == 0.0
                 return true
             end
 
             # Check start velocity
-            v_start = Velocity_At_Time(profile, 0.0, Cm, start_vel)
+            v_start = velocity_at_time(profile, 0.0, Cm, start_vel)
             @test isapprox(v_start, start_vel, rtol=1e-10, atol=1e-10)
 
             # Check end velocity
-            v_end = Velocity_At_Time(profile, t_max * 0.9999, Cm, start_vel)
+            v_end = velocity_at_time(profile, t_max * 0.9999, Cm, start_vel)
             @test isapprox(v_end, end_vel, rtol=0.01, atol=0.1)
 
             # Check total distance
-            d_total = Distance_At_Time(profile, t_max * 0.9999, Cm, start_vel)
+            d_total = distance_at_time(profile, t_max * 0.9999, Cm, start_vel)
             @test isapprox(d_total, distance, rtol=0.01, atol=0.1)
 
             # Check velocity never exceeds max_vel (sample throughout trajectory)
             for i in 0:n_samples
                 t = (i / n_samples) * t_max * 0.9999
-                v = Velocity_At_Time(profile, t, Cm, start_vel)
+                v = velocity_at_time(profile, t, Cm, start_vel)
                 @test v <= max_vel + max_vel * 0.01 + 1e-9
                 @test v >= 0.0 - 1e-9  # Velocity should be non-negative
             end
@@ -316,7 +316,7 @@ using Random
 
         # Test that kinematic limits are respected throughout a full profile
         function test_kinematic_limits(profile::FeedrateProfile, Cm, Am, Jm, Sm; n_samples=1000)
-            t_max = Total_Time(profile)
+            t_max = total_time(profile)
             if t_max == 0
                 return true
             end
@@ -325,10 +325,10 @@ using Random
             for i in 0:n_samples
                 t = (i / n_samples) * t_max * 0.9999  # Avoid exact endpoint
 
-                crackle = abs(Crackle_At_Time(profile, t, Cm))
-                snap = abs(Snap_At_Time(profile, t, Cm))
-                jerk = abs(Jerk_At_Time(profile, t, Cm))
-                accel = abs(Acceleration_At_Time(profile, t, Cm))
+                crackle = abs(crackle_at_time(profile, t, Cm))
+                snap = abs(snap_at_time(profile, t, Cm))
+                jerk = abs(jerk_at_time(profile, t, Cm))
+                accel = abs(acceleration_at_time(profile, t, Cm))
 
                 # Allow small tolerance for numerical precision
                 tol = 1e-9
@@ -358,7 +358,7 @@ using Random
 
                 # Try to create profile (may fail for some parameter combinations)
                 try
-                    profile = Optimal_Full_Profile(start_vel, max_vel, end_vel, distance, Am, Jm, Sm, Cm)
+                    profile = optimal_full_profile(start_vel, max_vel, end_vel, distance, Am, Jm, Sm, Cm)
                     @testset "Full profile $i" begin
                         test_full_profile_integration(profile, Cm, start_vel)
                         test_kinematic_limits(profile, Cm, Am, Jm, Sm)

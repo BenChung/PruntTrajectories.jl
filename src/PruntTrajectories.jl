@@ -1,11 +1,11 @@
 module PruntTrajectories
 
 export FeedrateProfileTimes, FeedrateProfile
-export Fast_Distance_At_Max_Time, Fast_Velocity_At_Max_Time
-export Total_Time
-export Crackle_At_Time, Snap_At_Time, Jerk_At_Time, Acceleration_At_Time, Velocity_At_Time, Distance_At_Time
-export Distance_At_Time_With_Accel_Flag
-export Optimal_Profile_For_Distance, Optimal_Profile_For_Delta_V, Optimal_Full_Profile
+export fast_distance_at_max_time, fast_velocity_at_max_time
+export total_time
+export crackle_at_time, snap_at_time, jerk_at_time, acceleration_at_time, velocity_at_time, distance_at_time
+export distance_at_time_with_accel_flag
+export optimal_profile_for_distance, optimal_profile_for_delta_v, optimal_full_profile
 
 """
     FeedrateProfileTimes
@@ -34,7 +34,7 @@ struct FeedrateProfile
 end
 
 """
-    Fast_Distance_At_Max_Time(profile::FeedrateProfileTimes, max_crackle, start_vel)
+    fast_distance_at_max_time(profile::FeedrateProfileTimes, max_crackle, start_vel)
 
 Calculates the total distance covered during an acceleration or deceleration phase defined
 by `profile` with a given starting velocity and maximum crackle.
@@ -42,10 +42,10 @@ by `profile` with a given starting velocity and maximum crackle.
 For an acceleration phase `max_crackle` should be positive and for a deceleration phase
 `max_crackle` should be negative.
 
-This function is an optimised version of [`Distance_At_Time`](@ref) where `T` is equal to
-[`Total_Time`](@ref)`(profile)`.
+This function is an optimised version of [`distance_at_time`](@ref) where `T` is equal to
+[`total_time`](@ref)`(profile)`.
 """
-function Fast_Distance_At_Max_Time(profile::FeedrateProfileTimes, max_crackle, start_vel)
+function fast_distance_at_max_time(profile::FeedrateProfileTimes, max_crackle, start_vel)
     T1 = profile.t1
     T2 = profile.t2
     T3 = profile.t3
@@ -58,7 +58,7 @@ function Fast_Distance_At_Max_Time(profile::FeedrateProfileTimes, max_crackle, s
 end
 
 """
-    Fast_Velocity_At_Max_Time(profile::FeedrateProfileTimes, max_crackle, start_vel)
+    fast_velocity_at_max_time(profile::FeedrateProfileTimes, max_crackle, start_vel)
 
 Calculates the final velocity after an acceleration or deceleration phase defined by
 `profile` with a given starting velocity and maximum crackle.
@@ -66,10 +66,10 @@ Calculates the final velocity after an acceleration or deceleration phase define
 For an acceleration phase `max_crackle` should be positive and for a deceleration phase
 `max_crackle` should be negative.
 
-This function is an optimised version of [`Velocity_At_Time`](@ref) where `T` is equal to
-[`Total_Time`](@ref)`(profile)`.
+This function is an optimised version of [`velocity_at_time`](@ref) where `T` is equal to
+[`total_time`](@ref)`(profile)`.
 """
-function Fast_Velocity_At_Max_Time(profile::FeedrateProfileTimes, max_crackle, start_vel)
+function fast_velocity_at_max_time(profile::FeedrateProfileTimes, max_crackle, start_vel)
     T1 = profile.t1
     T2 = profile.t2
     T3 = profile.t3
@@ -81,27 +81,27 @@ function Fast_Velocity_At_Max_Time(profile::FeedrateProfileTimes, max_crackle, s
 end
 
 """
-    Total_Time(times::FeedrateProfileTimes)
+    total_time(times::FeedrateProfileTimes)
 
 Calculates the total duration of a single acceleration or deceleration phase. This is not
 equivalent to the sum of components as some components are used multiple times.
 """
-function Total_Time(times::FeedrateProfileTimes)
+function total_time(times::FeedrateProfileTimes)
     return 8.0 * times.t1 + 4.0 * times.t2 + 2.0 * times.t3 + times.t4
 end
 
 """
-    Total_Time(profile::FeedrateProfile)
+    total_time(profile::FeedrateProfile)
 
 Calculates the total duration of a complete feedrate profile. This is not equivalent to
 the sum of components as some components are used multiple times.
 """
-function Total_Time(profile::FeedrateProfile)
-    return Total_Time(profile.accel) + profile.coast + Total_Time(profile.decel)
+function total_time(profile::FeedrateProfile)
+    return total_time(profile.accel) + profile.coast + total_time(profile.decel)
 end
 
 """
-    Crackle_At_Time(profile::FeedrateProfileTimes, T, max_crackle)
+    crackle_at_time(profile::FeedrateProfileTimes, T, max_crackle)
 
 Returns the crackle at a specific time `T` within a single acceleration or deceleration
 phase. The crackle will be either `+max_crackle`, `-max_crackle`, or zero. For an
@@ -110,8 +110,8 @@ acceleration phase `max_crackle` should be positive and for a deceleration phase
 
 The return value may be negative.
 """
-function Crackle_At_Time(profile::FeedrateProfileTimes, T, max_crackle)
-    @assert T <= Total_Time(profile)
+function crackle_at_time(profile::FeedrateProfileTimes, T, max_crackle)
+    @assert T <= total_time(profile)
     T1, T2, T3, T4 = profile.t1, profile.t2, profile.t3, profile.t4
     Cm = max_crackle
 
@@ -149,7 +149,7 @@ function Crackle_At_Time(profile::FeedrateProfileTimes, T, max_crackle)
 end
 
 """
-    Snap_At_Time(profile::FeedrateProfileTimes, T, max_crackle)
+    snap_at_time(profile::FeedrateProfileTimes, T, max_crackle)
 
 Returns the snap at a specific time `T` within a single acceleration or deceleration
 phase. For an acceleration phase `max_crackle` should be positive and for a deceleration
@@ -157,79 +157,79 @@ phase `max_crackle` should be negative.
 
 The return value may be negative.
 """
-function Snap_At_Time(profile::FeedrateProfileTimes, T, max_crackle)
+function snap_at_time(profile::FeedrateProfileTimes, T, max_crackle)
     T1, T2, T3, T4 = profile.t1, profile.t2, profile.t3, profile.t4
     Cm = max_crackle
-    function Snap_At_Stage(DT, Stage)
+    function snap_at_stage(DT, Stage)
         if Stage == 1
             return Cm * DT
         elseif Stage == 2
-            return Snap_At_Stage(T1, 1)
+            return snap_at_stage(T1, 1)
         elseif Stage == 3
-            return Snap_At_Stage(T2, 2) - Cm * DT
+            return snap_at_stage(T2, 2) - Cm * DT
         elseif Stage == 4
-            return Snap_At_Stage(T1, 3)
+            return snap_at_stage(T1, 3)
         elseif Stage == 5
-            return Snap_At_Stage(T3, 4) - Cm * DT
+            return snap_at_stage(T3, 4) - Cm * DT
         elseif Stage == 6
-            return Snap_At_Stage(T1, 5)
+            return snap_at_stage(T1, 5)
         elseif Stage == 7
-            return Snap_At_Stage(T2, 6) + Cm * DT
+            return snap_at_stage(T2, 6) + Cm * DT
         elseif Stage == 8
-            return Snap_At_Stage(T1, 7)
+            return snap_at_stage(T1, 7)
         elseif Stage == 9
-            return Snap_At_Stage(T4, 8) - Cm * DT
+            return snap_at_stage(T4, 8) - Cm * DT
         elseif Stage == 10
-            return Snap_At_Stage(T1, 9)
+            return snap_at_stage(T1, 9)
         elseif Stage == 11
-            return Snap_At_Stage(T2, 10) + Cm * DT
+            return snap_at_stage(T2, 10) + Cm * DT
         elseif Stage == 12
-            return Snap_At_Stage(T1, 11)
+            return snap_at_stage(T1, 11)
         elseif Stage == 13
-            return Snap_At_Stage(T3, 12) + Cm * DT
+            return snap_at_stage(T3, 12) + Cm * DT
         elseif Stage == 14
-            return Snap_At_Stage(T1, 13)
+            return snap_at_stage(T1, 13)
         elseif Stage == 15
-            return Snap_At_Stage(T2, 14) - Cm * DT
+            return snap_at_stage(T2, 14) - Cm * DT
         end
     end
-    @assert T <= Total_Time(profile)
+    @assert T <= total_time(profile)
 
     if T < T1
-        return Snap_At_Stage(T, 1)
+        return snap_at_stage(T, 1)
     elseif T < T1 + T2
-        return Snap_At_Stage(T - (T1), 2)
+        return snap_at_stage(T - (T1), 2)
     elseif T < 2.0 * T1 + T2
-        return Snap_At_Stage(T - (T1 + T2), 3)
+        return snap_at_stage(T - (T1 + T2), 3)
     elseif T < 2.0 * T1 + T2 + T3
-        return Snap_At_Stage(T - (2.0 * T1 + T2), 4)
+        return snap_at_stage(T - (2.0 * T1 + T2), 4)
     elseif T < 3.0 * T1 + T2 + T3
-        return Snap_At_Stage(T - (2.0 * T1 + T2 + T3), 5)
+        return snap_at_stage(T - (2.0 * T1 + T2 + T3), 5)
     elseif T < 3.0 * T1 + 2.0 * T2 + T3
-        return Snap_At_Stage(T - (3.0 * T1 + T2 + T3), 6)
+        return snap_at_stage(T - (3.0 * T1 + T2 + T3), 6)
     elseif T < 4.0 * T1 + 2.0 * T2 + T3
-        return Snap_At_Stage(T - (3.0 * T1 + 2.0 * T2 + T3), 7)
+        return snap_at_stage(T - (3.0 * T1 + 2.0 * T2 + T3), 7)
     elseif T < 4.0 * T1 + 2.0 * T2 + T3 + T4
-        return Snap_At_Stage(T - (4.0 * T1 + 2.0 * T2 + T3), 8)
+        return snap_at_stage(T - (4.0 * T1 + 2.0 * T2 + T3), 8)
     elseif T < 5.0 * T1 + 2.0 * T2 + T3 + T4
-        return Snap_At_Stage(T - (4.0 * T1 + 2.0 * T2 + T3 + T4), 9)
+        return snap_at_stage(T - (4.0 * T1 + 2.0 * T2 + T3 + T4), 9)
     elseif T < 5.0 * T1 + 3.0 * T2 + T3 + T4
-        return Snap_At_Stage(T - (5.0 * T1 + 2.0 * T2 + T3 + T4), 10)
+        return snap_at_stage(T - (5.0 * T1 + 2.0 * T2 + T3 + T4), 10)
     elseif T < 6.0 * T1 + 3.0 * T2 + T3 + T4
-        return Snap_At_Stage(T - (5.0 * T1 + 3.0 * T2 + T3 + T4), 11)
+        return snap_at_stage(T - (5.0 * T1 + 3.0 * T2 + T3 + T4), 11)
     elseif T < 6.0 * T1 + 3.0 * T2 + 2.0 * T3 + T4
-        return Snap_At_Stage(T - (6.0 * T1 + 3.0 * T2 + T3 + T4), 12)
+        return snap_at_stage(T - (6.0 * T1 + 3.0 * T2 + T3 + T4), 12)
     elseif T < 7.0 * T1 + 3.0 * T2 + 2.0 * T3 + T4
-        return Snap_At_Stage(T - (6.0 * T1 + 3.0 * T2 + 2.0 * T3 + T4), 13)
+        return snap_at_stage(T - (6.0 * T1 + 3.0 * T2 + 2.0 * T3 + T4), 13)
     elseif T < 7.0 * T1 + 4.0 * T2 + 2.0 * T3 + T4
-        return Snap_At_Stage(T - (7.0 * T1 + 3.0 * T2 + 2.0 * T3 + T4), 14)
+        return snap_at_stage(T - (7.0 * T1 + 3.0 * T2 + 2.0 * T3 + T4), 14)
     else
-        return Snap_At_Stage(T - (7.0 * T1 + 4.0 * T2 + 2.0 * T3 + T4), 15)
+        return snap_at_stage(T - (7.0 * T1 + 4.0 * T2 + 2.0 * T3 + T4), 15)
     end
 end
 
 """
-    Jerk_At_Time(profile::FeedrateProfileTimes, T, max_crackle)
+    jerk_at_time(profile::FeedrateProfileTimes, T, max_crackle)
 
 Returns the jerk at a specific time `T` within a single acceleration or deceleration
 phase. For an acceleration phase `max_crackle` should be positive and for a deceleration
@@ -237,80 +237,80 @@ phase `max_crackle` should be negative.
 
 The return value may be negative.
 """
-function Jerk_At_Time(profile::FeedrateProfileTimes, T, max_crackle)
+function jerk_at_time(profile::FeedrateProfileTimes, T, max_crackle)
     T1, T2, T3, T4 = profile.t1, profile.t2, profile.t3, profile.t4
     Cm = max_crackle
     
-    function Jerk_At_Stage(DT, Stage)
+    function jerk_at_stage(DT, Stage)
         if Stage == 1
             return Cm * DT^2 / 2.0;
         elseif Stage == 2
-            return Jerk_At_Stage(T1, 1) + Cm * DT * T1;
+            return jerk_at_stage(T1, 1) + Cm * DT * T1;
         elseif Stage == 3
-            return Jerk_At_Stage(T2, 2) + Cm * DT * (-DT + 2.0 * T1) / 2.0;
+            return jerk_at_stage(T2, 2) + Cm * DT * (-DT + 2.0 * T1) / 2.0;
         elseif Stage == 4
-            return Jerk_At_Stage(T1, 3);
+            return jerk_at_stage(T1, 3);
         elseif Stage == 5
-            return Jerk_At_Stage(T3, 4) - Cm * DT^2 / 2.0;
+            return jerk_at_stage(T3, 4) - Cm * DT^2 / 2.0;
         elseif Stage == 6
-            return Jerk_At_Stage(T1, 5) - Cm * DT * T1;
+            return jerk_at_stage(T1, 5) - Cm * DT * T1;
         elseif Stage == 7
-            return Jerk_At_Stage(T2, 6) + Cm * DT * (DT - 2.0 * T1) / 2.0;
+            return jerk_at_stage(T2, 6) + Cm * DT * (DT - 2.0 * T1) / 2.0;
         elseif Stage == 8
-            return Jerk_At_Stage(T1, 7);
+            return jerk_at_stage(T1, 7);
         elseif Stage == 9
-            return Jerk_At_Stage(T4, 8) - Cm * DT^2 / 2.0;
+            return jerk_at_stage(T4, 8) - Cm * DT^2 / 2.0;
         elseif Stage == 10
-            return Jerk_At_Stage(T1, 9) - Cm * DT * T1;
+            return jerk_at_stage(T1, 9) - Cm * DT * T1;
         elseif Stage == 11
-            return Jerk_At_Stage(T2, 10) + Cm * DT * (DT - 2.0 * T1) / 2.0;
+            return jerk_at_stage(T2, 10) + Cm * DT * (DT - 2.0 * T1) / 2.0;
         elseif Stage == 12
-            return Jerk_At_Stage(T1, 11);
+            return jerk_at_stage(T1, 11);
         elseif Stage == 13
-            return Jerk_At_Stage(T3, 12) + Cm * DT^2 / 2.0;
+            return jerk_at_stage(T3, 12) + Cm * DT^2 / 2.0;
         elseif Stage == 14
-            return Jerk_At_Stage(T1, 13) + Cm * DT * T1;
+            return jerk_at_stage(T1, 13) + Cm * DT * T1;
         elseif Stage == 15
-            return Jerk_At_Stage(T2, 14) + Cm * DT * (-DT + 2.0 * T1) / 2.0;
+            return jerk_at_stage(T2, 14) + Cm * DT * (-DT + 2.0 * T1) / 2.0;
         end
     end
-    @assert T <= Total_Time(profile)
+    @assert T <= total_time(profile)
 
     if T < T1
-        return Jerk_At_Stage(T, 1)
+        return jerk_at_stage(T, 1)
     elseif T < T1 + T2
-        return Jerk_At_Stage(T - (T1), 2)
+        return jerk_at_stage(T - (T1), 2)
     elseif T < 2.0 * T1 + T2
-        return Jerk_At_Stage(T - (T1 + T2), 3)
+        return jerk_at_stage(T - (T1 + T2), 3)
     elseif T < 2.0 * T1 + T2 + T3
-        return Jerk_At_Stage(T - (2.0 * T1 + T2), 4)
+        return jerk_at_stage(T - (2.0 * T1 + T2), 4)
     elseif T < 3.0 * T1 + T2 + T3
-        return Jerk_At_Stage(T - (2.0 * T1 + T2 + T3), 5)
+        return jerk_at_stage(T - (2.0 * T1 + T2 + T3), 5)
     elseif T < 3.0 * T1 + 2.0 * T2 + T3
-        return Jerk_At_Stage(T - (3.0 * T1 + T2 + T3), 6)
+        return jerk_at_stage(T - (3.0 * T1 + T2 + T3), 6)
     elseif T < 4.0 * T1 + 2.0 * T2 + T3
-        return Jerk_At_Stage(T - (3.0 * T1 + 2.0 * T2 + T3), 7)
+        return jerk_at_stage(T - (3.0 * T1 + 2.0 * T2 + T3), 7)
     elseif T < 4.0 * T1 + 2.0 * T2 + T3 + T4
-        return Jerk_At_Stage(T - (4.0 * T1 + 2.0 * T2 + T3), 8)
+        return jerk_at_stage(T - (4.0 * T1 + 2.0 * T2 + T3), 8)
     elseif T < 5.0 * T1 + 2.0 * T2 + T3 + T4
-        return Jerk_At_Stage(T - (4.0 * T1 + 2.0 * T2 + T3 + T4), 9)
+        return jerk_at_stage(T - (4.0 * T1 + 2.0 * T2 + T3 + T4), 9)
     elseif T < 5.0 * T1 + 3.0 * T2 + T3 + T4
-        return Jerk_At_Stage(T - (5.0 * T1 + 2.0 * T2 + T3 + T4), 10)
+        return jerk_at_stage(T - (5.0 * T1 + 2.0 * T2 + T3 + T4), 10)
     elseif T < 6.0 * T1 + 3.0 * T2 + T3 + T4
-        return Jerk_At_Stage(T - (5.0 * T1 + 3.0 * T2 + T3 + T4), 11)
+        return jerk_at_stage(T - (5.0 * T1 + 3.0 * T2 + T3 + T4), 11)
     elseif T < 6.0 * T1 + 3.0 * T2 + 2.0 * T3 + T4
-        return Jerk_At_Stage(T - (6.0 * T1 + 3.0 * T2 + T3 + T4), 12)
+        return jerk_at_stage(T - (6.0 * T1 + 3.0 * T2 + T3 + T4), 12)
     elseif T < 7.0 * T1 + 3.0 * T2 + 2.0 * T3 + T4
-        return Jerk_At_Stage(T - (6.0 * T1 + 3.0 * T2 + 2.0 * T3 + T4), 13)
+        return jerk_at_stage(T - (6.0 * T1 + 3.0 * T2 + 2.0 * T3 + T4), 13)
     elseif T < 7.0 * T1 + 4.0 * T2 + 2.0 * T3 + T4
-        return Jerk_At_Stage(T - (7.0 * T1 + 3.0 * T2 + 2.0 * T3 + T4), 14)
+        return jerk_at_stage(T - (7.0 * T1 + 3.0 * T2 + 2.0 * T3 + T4), 14)
     else
-         return Jerk_At_Stage(T - (7.0 * T1 + 4.0 * T2 + 2.0 * T3 + T4), 15)
+         return jerk_at_stage(T - (7.0 * T1 + 4.0 * T2 + 2.0 * T3 + T4), 15)
     end
 end
 
 """
-    Acceleration_At_Time(profile::FeedrateProfileTimes, T, max_crackle)
+    acceleration_at_time(profile::FeedrateProfileTimes, T, max_crackle)
 
 Returns the acceleration at a specific time `T` within a single acceleration or
 deceleration phase. For an acceleration phase `max_crackle` should be positive and for
@@ -318,81 +318,81 @@ a deceleration phase `max_crackle` should be negative.
 
 The return value may be negative.
 """
-function Acceleration_At_Time(profile::FeedrateProfileTimes, T, max_crackle)
+function acceleration_at_time(profile::FeedrateProfileTimes, T, max_crackle)
     T1, T2, T3, T4 = profile.t1, profile.t2, profile.t3, profile.t4
     Cm = max_crackle
     
-    function Acceleration_At_Stage(DT, Stage)
+    function acceleration_at_stage(DT, Stage)
         if Stage == 1
             return Cm * DT^3 / 6.0;
         elseif Stage == 2
-            return Acceleration_At_Stage(T1, 1) + Cm * DT * T1 * (DT + T1) / 2.0;
+            return acceleration_at_stage(T1, 1) + Cm * DT * T1 * (DT + T1) / 2.0;
         elseif Stage == 3
-               return Acceleration_At_Stage(T2, 2) + Cm * DT * (-DT^2 + 3.0 * DT * T1 + 3.0 * T1 * (T1 + 2.0 * T2)) / 6.0;
+               return acceleration_at_stage(T2, 2) + Cm * DT * (-DT^2 + 3.0 * DT * T1 + 3.0 * T1 * (T1 + 2.0 * T2)) / 6.0;
         elseif Stage == 4
-            return Acceleration_At_Stage(T1, 3) + Cm * DT * T1 * (T1 + T2);
+            return acceleration_at_stage(T1, 3) + Cm * DT * T1 * (T1 + T2);
         elseif Stage == 5
-            return Acceleration_At_Stage(T3, 4) + Cm * DT * (-DT^2 + 6.0 * T1 * (T1 + T2)) / 6.0;
+            return acceleration_at_stage(T3, 4) + Cm * DT * (-DT^2 + 6.0 * T1 * (T1 + T2)) / 6.0;
         elseif Stage == 6
-            return Acceleration_At_Stage(T1, 5) + Cm * DT * T1 * (-DT + T1 + 2.0 * T2) / 2.0;
+            return acceleration_at_stage(T1, 5) + Cm * DT * T1 * (-DT + T1 + 2.0 * T2) / 2.0;
         elseif Stage == 7
-            return Acceleration_At_Stage(T2, 6) + Cm * DT * (DT^2 - 3.0 * DT * T1 + 3.0 * T1^2) / 6.0;
+            return acceleration_at_stage(T2, 6) + Cm * DT * (DT^2 - 3.0 * DT * T1 + 3.0 * T1^2) / 6.0;
         elseif Stage == 8
-            return Acceleration_At_Stage(T1, 7);
+            return acceleration_at_stage(T1, 7);
         elseif Stage == 9
-            return Acceleration_At_Stage(T4, 8) - Cm * DT^3 / 6.0;
+            return acceleration_at_stage(T4, 8) - Cm * DT^3 / 6.0;
         elseif Stage == 10
-            return Acceleration_At_Stage(T1, 9) + Cm * DT * T1 * (-DT - T1) / 2.0;
+            return acceleration_at_stage(T1, 9) + Cm * DT * T1 * (-DT - T1) / 2.0;
         elseif Stage == 11
-            return Acceleration_At_Stage(T2, 10) + Cm * DT * (DT^2 - 3.0 * DT * T1 - 3.0 * T1 * (T1 + 2.0 * T2)) / 6.0;
+            return acceleration_at_stage(T2, 10) + Cm * DT * (DT^2 - 3.0 * DT * T1 - 3.0 * T1 * (T1 + 2.0 * T2)) / 6.0;
         elseif Stage == 12
-            return Acceleration_At_Stage(T1, 11) - Cm * DT * T1 * (T1 + T2);
+            return acceleration_at_stage(T1, 11) - Cm * DT * T1 * (T1 + T2);
         elseif Stage == 13
-            return Acceleration_At_Stage(T3, 12) + Cm * DT * (DT^2 - 6.0 * T1 * (T1 + T2)) / 6.0;
+            return acceleration_at_stage(T3, 12) + Cm * DT * (DT^2 - 6.0 * T1 * (T1 + T2)) / 6.0;
         elseif Stage == 14
-            return Acceleration_At_Stage(T1, 13) + Cm * DT * T1 * (DT - T1 - 2.0 * T2) / 2.0;
+            return acceleration_at_stage(T1, 13) + Cm * DT * T1 * (DT - T1 - 2.0 * T2) / 2.0;
         elseif Stage == 15
-            return Acceleration_At_Stage(T2, 14) + Cm * DT * (-DT^2 + 3.0 * DT * T1 - 3.0 * T1^2) / 6.0;
+            return acceleration_at_stage(T2, 14) + Cm * DT * (-DT^2 + 3.0 * DT * T1 - 3.0 * T1^2) / 6.0;
         end
     end
 
-    @assert T <= Total_Time(profile)
+    @assert T <= total_time(profile)
 
     if T < T1
-        return Acceleration_At_Stage(T, 1);
+        return acceleration_at_stage(T, 1);
     elseif T < T1 + T2
-        return Acceleration_At_Stage(T - (T1), 2);
+        return acceleration_at_stage(T - (T1), 2);
     elseif T < 2.0 * T1 + T2
-        return Acceleration_At_Stage(T - (T1 + T2), 3);
+        return acceleration_at_stage(T - (T1 + T2), 3);
     elseif T < 2.0 * T1 + T2 + T3
-        return Acceleration_At_Stage(T - (2.0 * T1 + T2), 4);
+        return acceleration_at_stage(T - (2.0 * T1 + T2), 4);
     elseif T < 3.0 * T1 + T2 + T3
-        return Acceleration_At_Stage(T - (2.0 * T1 + T2 + T3), 5);
+        return acceleration_at_stage(T - (2.0 * T1 + T2 + T3), 5);
     elseif T < 3.0 * T1 + 2.0 * T2 + T3
-        return Acceleration_At_Stage(T - (3.0 * T1 + T2 + T3), 6);
+        return acceleration_at_stage(T - (3.0 * T1 + T2 + T3), 6);
     elseif T < 4.0 * T1 + 2.0 * T2 + T3
-        return Acceleration_At_Stage(T - (3.0 * T1 + 2.0 * T2 + T3), 7);
+        return acceleration_at_stage(T - (3.0 * T1 + 2.0 * T2 + T3), 7);
     elseif T < 4.0 * T1 + 2.0 * T2 + T3 + T4
-        return Acceleration_At_Stage(T - (4.0 * T1 + 2.0 * T2 + T3), 8);
+        return acceleration_at_stage(T - (4.0 * T1 + 2.0 * T2 + T3), 8);
     elseif T < 5.0 * T1 + 2.0 * T2 + T3 + T4
-        return Acceleration_At_Stage(T - (4.0 * T1 + 2.0 * T2 + T3 + T4), 9);
+        return acceleration_at_stage(T - (4.0 * T1 + 2.0 * T2 + T3 + T4), 9);
     elseif T < 5.0 * T1 + 3.0 * T2 + T3 + T4
-        return Acceleration_At_Stage(T - (5.0 * T1 + 2.0 * T2 + T3 + T4), 10);
+        return acceleration_at_stage(T - (5.0 * T1 + 2.0 * T2 + T3 + T4), 10);
     elseif T < 6.0 * T1 + 3.0 * T2 + T3 + T4
-        return Acceleration_At_Stage(T - (5.0 * T1 + 3.0 * T2 + T3 + T4), 11);
+        return acceleration_at_stage(T - (5.0 * T1 + 3.0 * T2 + T3 + T4), 11);
     elseif T < 6.0 * T1 + 3.0 * T2 + 2.0 * T3 + T4
-        return Acceleration_At_Stage(T - (6.0 * T1 + 3.0 * T2 + T3 + T4), 12);
+        return acceleration_at_stage(T - (6.0 * T1 + 3.0 * T2 + T3 + T4), 12);
     elseif T < 7.0 * T1 + 3.0 * T2 + 2.0 * T3 + T4
-        return Acceleration_At_Stage(T - (6.0 * T1 + 3.0 * T2 + 2.0 * T3 + T4), 13);
+        return acceleration_at_stage(T - (6.0 * T1 + 3.0 * T2 + 2.0 * T3 + T4), 13);
     elseif T < 7.0 * T1 + 4.0 * T2 + 2.0 * T3 + T4
-        return Acceleration_At_Stage(T - (7.0 * T1 + 3.0 * T2 + 2.0 * T3 + T4), 14);
+        return acceleration_at_stage(T - (7.0 * T1 + 3.0 * T2 + 2.0 * T3 + T4), 14);
     else
-        return Acceleration_At_Stage(T - (7.0 * T1 + 4.0 * T2 + 2.0 * T3 + T4), 15);
+        return acceleration_at_stage(T - (7.0 * T1 + 4.0 * T2 + 2.0 * T3 + T4), 15);
     end
 end
 
 """
-    Velocity_At_Time(profile::FeedrateProfileTimes, T, max_crackle, start_vel)
+    velocity_at_time(profile::FeedrateProfileTimes, T, max_crackle, start_vel)
 
 Returns the velocity at a specific time `T` within a single acceleration or deceleration
 phase. For an acceleration phase `max_crackle` should be positive and for a deceleration
@@ -400,30 +400,30 @@ phase `max_crackle` should be negative.
 
 The return value may be negative.
 """
-function Velocity_At_Time(profile::FeedrateProfileTimes, T, max_crackle, start_vel)
+function velocity_at_time(profile::FeedrateProfileTimes, T, max_crackle, start_vel)
     T1, T2, T3, T4 = profile.t1, profile.t2, profile.t3, profile.t4
     Cm = max_crackle
     
-    function Velocity_At_Stage(DT, Stage)
+    function velocity_at_stage(DT, Stage)
         if Stage == 1
             return start_vel + Cm * DT^4 / 24.0;
         elseif Stage == 2 
-            return Velocity_At_Stage(T1, 1) + Cm * DT * T1 * (2.0 * DT^2 + 3.0 * DT * T1 + 2.0 * T1^2) / 12.0;
+            return velocity_at_stage(T1, 1) + Cm * DT * T1 * (2.0 * DT^2 + 3.0 * DT * T1 + 2.0 * T1^2) / 12.0;
         elseif Stage == 3
-            return (Velocity_At_Stage(T2, 2) + Cm * DT * (-DT^3
+            return (velocity_at_stage(T2, 2) + Cm * DT * (-DT^3
                       + 4.0 * DT^2 * T1
                       + 6.0 * DT * T1 * (T1 + 2.0 * T2)
                       + 4.0 * T1 * (T1^2 + 3.0 * T1 * T2 + 3.0 * T2^2)) / 24.0)
         elseif Stage == 4
-            return (Velocity_At_Stage(T1, 3)
+            return (velocity_at_stage(T1, 3)
                  + Cm * DT * T1 * (DT * (T1 + T2) + 2.0 * T1^2 + 3.0 * T1 * T2 + T2^2) / 2.0)
         elseif Stage == 5
-            return (Velocity_At_Stage(T3, 4)
+            return (velocity_at_stage(T3, 4)
                  + Cm * DT * (-DT^3
                       + 12.0 * DT * T1 * (T1 + T2)
                       + 12.0 * T1 * (2.0 * T1^2 + 3.0 * T1 * T2 + 2.0 * T1 * T3 + T2^2 + 2.0 * T2 * T3)) / 24.0)
         elseif Stage == 6
-            return (Velocity_At_Stage(T1, 5)
+            return (velocity_at_stage(T1, 5)
                  + Cm * DT * T1 * (-2.0 * DT^2
                       + 3.0 * DT * (T1 + 2.0 * T2)
                       + 22.0 * T1^2
@@ -432,18 +432,18 @@ function Velocity_At_Time(profile::FeedrateProfileTimes, T, max_crackle, start_v
                       + 6.0 * T2^2
                       + 12.0 * T2 * T3) / 12.0)
         elseif Stage == 7
-            return (Velocity_At_Stage(T2, 6)
+            return (velocity_at_stage(T2, 6)
                  + Cm * DT * (DT^3
                       - 4.0 * DT^2 * T1
                       + 6.0 * DT * T1^2
                       + 4.0 * T1 * (11.0 * T1^2 + 18.0 * T1 * T2 + 6.0 * T1 * T3 + 6.0 * T2^2 + 6.0 * T2 * T3)) / 24.0)
         elseif Stage == 8
-            return (Velocity_At_Stage(T1, 7) + Cm * DT * T1 * (2.0 * T1^2 + 3.0 * T1 * T2 + T1 * T3 + T2^2 + T2 * T3))
+            return (velocity_at_stage(T1, 7) + Cm * DT * T1 * (2.0 * T1^2 + 3.0 * T1 * T2 + T1 * T3 + T2^2 + T2 * T3))
         elseif Stage == 9
-            return (Velocity_At_Stage(T4, 8)
+            return (velocity_at_stage(T4, 8)
                  + Cm * DT * (-DT^3 + 24.0 * T1 * (2.0 * T1^2 + 3.0 * T1 * T2 + T1 * T3 + T2^2 + T2 * T3)) / 24.0)
         elseif Stage == 10
-            return (Velocity_At_Stage(T1, 9)
+            return (velocity_at_stage(T1, 9)
                  + Cm * DT * T1 * (-2.0 * DT^2
                       - 3.0 * DT * T1
                       + 22.0 * T1^2
@@ -452,63 +452,63 @@ function Velocity_At_Time(profile::FeedrateProfileTimes, T, max_crackle, start_v
                       + 12.0 * T2^2
                       + 12.0 * T2 * T3) / 12.0)
         elseif Stage == 11
-            return (Velocity_At_Stage(T2, 10)
+            return (velocity_at_stage(T2, 10)
                  + Cm * DT * (DT^3
                       - 4.0 * DT^2 * T1
                       - 6.0 * DT * T1 * (T1 + 2.0 * T2)
                       + 4.0 * T1 * (11.0 * T1^2 + 15.0 * T1 * T2 + 6.0 * T1 * T3 + 3.0 * T2^2 + 6.0 * T2 * T3)) / 24.0)
         elseif Stage == 12
-            return (Velocity_At_Stage(T1, 11)
+            return (velocity_at_stage(T1, 11)
                  + Cm * DT * T1 * (-DT * (T1 + T2) + 2.0 * T1^2 + 3.0 * T1 * T2 + 2.0 * T1 * T3 + T2^2 + 2.0 * T2 * T3) / 2.0)
         elseif Stage == 13
-            return (Velocity_At_Stage(T3, 12)
+            return (velocity_at_stage(T3, 12)
                  + Cm * DT * (DT^3 - 12.0 * DT * T1 * (T1 + T2) + 12.0 * T1 * (2.0 * T1^2 + 3.0 * T1 * T2 + T2^2)) / 24.0)
         elseif Stage == 14
-            return (Velocity_At_Stage(T1, 13)
+            return (velocity_at_stage(T1, 13)
                  + Cm * DT * T1 * (2.0 * DT^2 - 3.0 * DT * (T1 + 2.0 * T2) + 2.0 * T1^2 + 6.0 * T1 * T2 + 6.0 * T2^2) / 12.0)
         elseif Stage == 15
-            return (Velocity_At_Stage(T2, 14)
+            return (velocity_at_stage(T2, 14)
                  + Cm * DT * (-DT^3 + 4.0 * DT^2 * T1 - 6.0 * DT * T1^2 + 4.0 * T1^3) / 24.0)
         end
     end
         
-    @assert T <= Total_Time(profile)
+    @assert T <= total_time(profile)
 
     if T < T1
-        return Velocity_At_Stage(T, 1);
+        return velocity_at_stage(T, 1);
     elseif T < T1 + T2
-        return Velocity_At_Stage(T - (T1), 2);
+        return velocity_at_stage(T - (T1), 2);
     elseif T < 2.0 * T1 + T2
-        return Velocity_At_Stage(T - (T1 + T2), 3);
+        return velocity_at_stage(T - (T1 + T2), 3);
     elseif T < 2.0 * T1 + T2 + T3
-        return Velocity_At_Stage(T - (2.0 * T1 + T2), 4);
+        return velocity_at_stage(T - (2.0 * T1 + T2), 4);
     elseif T < 3.0 * T1 + T2 + T3
-        return Velocity_At_Stage(T - (2.0 * T1 + T2 + T3), 5);
+        return velocity_at_stage(T - (2.0 * T1 + T2 + T3), 5);
     elseif T < 3.0 * T1 + 2.0 * T2 + T3
-        return Velocity_At_Stage(T - (3.0 * T1 + T2 + T3), 6);
+        return velocity_at_stage(T - (3.0 * T1 + T2 + T3), 6);
     elseif T < 4.0 * T1 + 2.0 * T2 + T3
-        return Velocity_At_Stage(T - (3.0 * T1 + 2.0 * T2 + T3), 7);
+        return velocity_at_stage(T - (3.0 * T1 + 2.0 * T2 + T3), 7);
     elseif T < 4.0 * T1 + 2.0 * T2 + T3 + T4
-        return Velocity_At_Stage(T - (4.0 * T1 + 2.0 * T2 + T3), 8);
+        return velocity_at_stage(T - (4.0 * T1 + 2.0 * T2 + T3), 8);
     elseif T < 5.0 * T1 + 2.0 * T2 + T3 + T4
-        return Velocity_At_Stage(T - (4.0 * T1 + 2.0 * T2 + T3 + T4), 9);
+        return velocity_at_stage(T - (4.0 * T1 + 2.0 * T2 + T3 + T4), 9);
     elseif T < 5.0 * T1 + 3.0 * T2 + T3 + T4
-        return Velocity_At_Stage(T - (5.0 * T1 + 2.0 * T2 + T3 + T4), 10);
+        return velocity_at_stage(T - (5.0 * T1 + 2.0 * T2 + T3 + T4), 10);
     elseif T < 6.0 * T1 + 3.0 * T2 + T3 + T4
-        return Velocity_At_Stage(T - (5.0 * T1 + 3.0 * T2 + T3 + T4), 11);
+        return velocity_at_stage(T - (5.0 * T1 + 3.0 * T2 + T3 + T4), 11);
     elseif T < 6.0 * T1 + 3.0 * T2 + 2.0 * T3 + T4
-        return Velocity_At_Stage(T - (6.0 * T1 + 3.0 * T2 + T3 + T4), 12);
+        return velocity_at_stage(T - (6.0 * T1 + 3.0 * T2 + T3 + T4), 12);
     elseif T < 7.0 * T1 + 3.0 * T2 + 2.0 * T3 + T4
-        return Velocity_At_Stage(T - (6.0 * T1 + 3.0 * T2 + 2.0 * T3 + T4), 13);
+        return velocity_at_stage(T - (6.0 * T1 + 3.0 * T2 + 2.0 * T3 + T4), 13);
     elseif T < 7.0 * T1 + 4.0 * T2 + 2.0 * T3 + T4
-        return Velocity_At_Stage(T - (7.0 * T1 + 3.0 * T2 + 2.0 * T3 + T4), 14);
+        return velocity_at_stage(T - (7.0 * T1 + 3.0 * T2 + 2.0 * T3 + T4), 14);
     else
-        return Velocity_At_Stage(T - (7.0 * T1 + 4.0 * T2 + 2.0 * T3 + T4), 15);
+        return velocity_at_stage(T - (7.0 * T1 + 4.0 * T2 + 2.0 * T3 + T4), 15);
     end
 end
 
 """
-    Distance_At_Time(profile::FeedrateProfileTimes, T, max_crackle, start_vel)
+    distance_at_time(profile::FeedrateProfileTimes, T, max_crackle, start_vel)
 
 Returns the distance from the start point at a specific time `T` within a single
 acceleration or deceleration phase. For an acceleration phase `max_crackle` should be
@@ -516,25 +516,25 @@ positive and for a deceleration phase `max_crackle` should be negative.
 
 The return value may be negative.
 """
-function Distance_At_Time(profile::FeedrateProfileTimes, T, max_crackle, start_vel)
+function distance_at_time(profile::FeedrateProfileTimes, T, max_crackle, start_vel)
     T1, T2, T3, T4 = profile.t1, profile.t2, profile.t3, profile.t4
     Cm = max_crackle
     
-    function Distance_At_Stage(DT, Stage)
+    function distance_at_stage(DT, Stage)
         if Stage == 1
             return start_vel * T + Cm * DT^5 / 120.0
         elseif Stage == 2
-            return (Distance_At_Stage(T1, 1)
+            return (distance_at_stage(T1, 1)
                  + Cm * DT * T1 * (DT^3 + 2.0 * DT^2 * T1 + 2.0 * DT * T1^2 + T1^3) / 24.0)
         elseif Stage == 3
-            return (Distance_At_Stage(T2, 2)
+            return (distance_at_stage(T2, 2)
                  + Cm * DT * (-DT^4
                       + 5.0 * DT^3 * T1
                       + 10.0 * DT^2 * T1 * (T1 + 2.0 * T2)
                       + 10.0 * DT * T1 * (T1^2 + 3.0 * T1 * T2 + 3.0 * T2^2)
                       + 5.0 * T1 * (T1^3 + 4.0 * T1^2 * T2 + 6.0 * T1 * T2^2 + 4.0 * T2^3)) / 120.0)
         elseif Stage == 4
-            return (Distance_At_Stage(T1, 3)
+            return (distance_at_stage(T1, 3)
                  + Cm * DT * T1 * (2.0 * DT^2 * (T1 + T2)
                       + 3.0 * DT * (2.0 * T1^2 + 3.0 * T1 * T2 + T2^2)
                       + 7.0 * T1^3
@@ -542,7 +542,7 @@ function Distance_At_Time(profile::FeedrateProfileTimes, T, max_crackle, start_v
                       + 9.0 * T1 * T2^2
                       + 2.0 * T2^3) / 12.0)
         elseif Stage == 5
-            return (Distance_At_Stage(T3, 4)
+            return (distance_at_stage(T3, 4)
                  + Cm * DT * (-DT^4
                       + 20.0 * DT^2 * T1 * (T1 + T2)
                       + 30.0 * DT * T1 * (2.0 * T1^2 + 3.0 * T1 * T2 + 2.0 * T1 * T3 + T2^2 + 2.0 * T2 * T3)
@@ -556,7 +556,7 @@ function Distance_At_Time(profile::FeedrateProfileTimes, T, max_crackle, start_v
                            + 6.0 * T2^2 * T3
                            + 6.0 * T2 * T3^2)) / 120.0)
         elseif Stage == 6
-            return (Distance_At_Stage(T1, 5)
+            return (distance_at_stage(T1, 5)
                  + Cm * DT * T1 * (-DT^3
                       + 2.0 * DT^2 * (T1 + 2.0 * T2)
                       + 2.0 * DT * (11.0 * T1^2 + 15.0 * T1 * T2 + 6.0 * T1 * T3 + 3.0 * T2^2 + 6.0 * T2 * T3)
@@ -570,7 +570,7 @@ function Distance_At_Time(profile::FeedrateProfileTimes, T, max_crackle, start_v
                       + 12.0 * T2^2 * T3
                       + 12.0 * T2 * T3^2) / 24.0)
         elseif Stage == 7
-            return (Distance_At_Stage(T2, 6)
+            return (distance_at_stage(T2, 6)
                  + Cm * DT * (DT^4
                       - 5.0 * DT^3 * T1
                       + 10.0 * DT^2 * T1^2
@@ -585,7 +585,7 @@ function Distance_At_Time(profile::FeedrateProfileTimes, T, max_crackle, start_v
                            + 36.0 * T2^2 * T3
                            + 12.0 * T2 * T3^2)) / 120.0)
         elseif Stage == 8
-            return (Distance_At_Stage(T1, 7)
+            return (distance_at_stage(T1, 7)
                  + Cm * DT * T1 * (DT * (2.0 * T1^2 + 3.0 * T1 * T2 + T1 * T3 + T2^2 + T2 * T3)
                       + 8.0 * T1^3
                       + 16.0 * T1^2 * T2
@@ -597,7 +597,7 @@ function Distance_At_Time(profile::FeedrateProfileTimes, T, max_crackle, start_v
                       + 3.0 * T2^2 * T3
                       + T2 * T3^2) / 2.0)
         elseif Stage == 9
-            return (Distance_At_Stage(T4, 8)
+            return (distance_at_stage(T4, 8)
                  + Cm * DT * (-DT^4
                       + 60.0 * DT * T1 * (2.0 * T1^2 + 3.0 * T1 * T2 + T1 * T3 + T2^2 + T2 * T3)
                       + 60.0 * T1 * (8.0 * T1^3
@@ -615,7 +615,7 @@ function Distance_At_Time(profile::FeedrateProfileTimes, T, max_crackle, start_v
                            + T2 * T3^2
                            + 2.0 * T2 * T3 * T4)) / 120.0)
         elseif Stage == 10
-            return (Distance_At_Stage(T1, 9)
+            return (distance_at_stage(T1, 9)
                  + Cm * DT * T1 * (-DT^3
                       - 2.0 * DT^2 * T1
                       + 2.0 * DT * (11.0 * T1^2 + 18.0 * T1 * T2 + 6.0 * T1 * T3 + 6.0 * T2^2 + 6.0 * T2 * T3)
@@ -634,7 +634,7 @@ function Distance_At_Time(profile::FeedrateProfileTimes, T, max_crackle, start_v
                       + 12.0 * T2 * T3^2
                       + 24.0 * T2 * T3 * T4) / 24.0)
         elseif Stage == 11
-            return (Distance_At_Stage(T2, 10)
+            return (distance_at_stage(T2, 10)
                  + Cm * DT * (DT^4
                       - 5.0 * DT^3 * T1
                       - 10.0 * DT^2 * T1 * (T1 + 2.0 * T2)
@@ -654,7 +654,7 @@ function Distance_At_Time(profile::FeedrateProfileTimes, T, max_crackle, start_v
                            + 12.0 * T2 * T3^2
                            + 24.0 * T2 * T3 * T4)) / 120.0)
         elseif Stage == 12
-            return (Distance_At_Stage(T1, 11)
+            return (distance_at_stage(T1, 11)
                  + Cm * DT * T1 * (-2.0 * DT^2 * (T1 + T2)
                       + 3.0 * DT * (2.0 * T1^2 + 3.0 * T1 * T2 + 2.0 * T1 * T3 + T2^2 + 2.0 * T2 * T3)
                       + 89.0 * T1^3
@@ -672,7 +672,7 @@ function Distance_At_Time(profile::FeedrateProfileTimes, T, max_crackle, start_v
                       + 6.0 * T2 * T3^2
                       + 12.0 * T2 * T3 * T4) / 12.0)
         elseif Stage == 13
-            return (Distance_At_Stage(T3, 12)
+            return (distance_at_stage(T3, 12)
                  + Cm * DT * (DT^4
                       - 20.0 * DT^2 * T1 * (T1 + T2)
                       + 30.0 * DT * T1 * (2.0 * T1^2 + 3.0 * T1 * T2 + T2^2)
@@ -691,7 +691,7 @@ function Distance_At_Time(profile::FeedrateProfileTimes, T, max_crackle, start_v
                            + 12.0 * T2 * T3^2
                            + 12.0 * T2 * T3 * T4)) / 120.0)
         elseif Stage == 14
-            return (Distance_At_Stage(T1, 13)
+            return (distance_at_stage(T1, 13)
                  + Cm * DT * T1 * (DT^3
                       - 2.0 * DT^2 * (T1 + 2.0 * T2)
                       + 2.0 * DT * (T1^2 + 3.0 * T1 * T2 + 3.0 * T2^2)
@@ -710,7 +710,7 @@ function Distance_At_Time(profile::FeedrateProfileTimes, T, max_crackle, start_v
                       + 24.0 * T2 * T3^2
                       + 24.0 * T2 * T3 * T4) / 24.0)
         elseif Stage == 15
-            return (Distance_At_Stage(T2, 14)
+            return (distance_at_stage(T2, 14)
                  + Cm * DT * (-DT^4
                       + 5.0 * DT^3 * T1
                       - 10.0 * DT^2 * T1^2
@@ -731,160 +731,160 @@ function Distance_At_Time(profile::FeedrateProfileTimes, T, max_crackle, start_v
                            + 24.0 * T2 * T3 * T4)) / 120.0)
         end
     end
-    @assert T <= Total_Time(profile)
+    @assert T <= total_time(profile)
 
     if T < T1
-        return Distance_At_Stage(T, 1)
+        return distance_at_stage(T, 1)
     elseif T < T1 + T2
-        return Distance_At_Stage(T - (T1), 2)
+        return distance_at_stage(T - (T1), 2)
     elseif T < 2.0 * T1 + T2
-        return Distance_At_Stage(T - (T1 + T2), 3)
+        return distance_at_stage(T - (T1 + T2), 3)
     elseif T < 2.0 * T1 + T2 + T3
-        return Distance_At_Stage(T - (2.0 * T1 + T2), 4)
+        return distance_at_stage(T - (2.0 * T1 + T2), 4)
     elseif T < 3.0 * T1 + T2 + T3
-        return Distance_At_Stage(T - (2.0 * T1 + T2 + T3), 5)
+        return distance_at_stage(T - (2.0 * T1 + T2 + T3), 5)
     elseif T < 3.0 * T1 + 2.0 * T2 + T3
-        return Distance_At_Stage(T - (3.0 * T1 + T2 + T3), 6)
+        return distance_at_stage(T - (3.0 * T1 + T2 + T3), 6)
     elseif T < 4.0 * T1 + 2.0 * T2 + T3
-        return Distance_At_Stage(T - (3.0 * T1 + 2.0 * T2 + T3), 7)
+        return distance_at_stage(T - (3.0 * T1 + 2.0 * T2 + T3), 7)
     elseif T < 4.0 * T1 + 2.0 * T2 + T3 + T4
-        return Distance_At_Stage(T - (4.0 * T1 + 2.0 * T2 + T3), 8)
+        return distance_at_stage(T - (4.0 * T1 + 2.0 * T2 + T3), 8)
     elseif T < 5.0 * T1 + 2.0 * T2 + T3 + T4
-        return Distance_At_Stage(T - (4.0 * T1 + 2.0 * T2 + T3 + T4), 9)
+        return distance_at_stage(T - (4.0 * T1 + 2.0 * T2 + T3 + T4), 9)
     elseif T < 5.0 * T1 + 3.0 * T2 + T3 + T4
-        return Distance_At_Stage(T - (5.0 * T1 + 2.0 * T2 + T3 + T4), 10)
+        return distance_at_stage(T - (5.0 * T1 + 2.0 * T2 + T3 + T4), 10)
     elseif T < 6.0 * T1 + 3.0 * T2 + T3 + T4
-        return Distance_At_Stage(T - (5.0 * T1 + 3.0 * T2 + T3 + T4), 11)
+        return distance_at_stage(T - (5.0 * T1 + 3.0 * T2 + T3 + T4), 11)
     elseif T < 6.0 * T1 + 3.0 * T2 + 2.0 * T3 + T4
-        return Distance_At_Stage(T - (6.0 * T1 + 3.0 * T2 + T3 + T4), 12)
+        return distance_at_stage(T - (6.0 * T1 + 3.0 * T2 + T3 + T4), 12)
     elseif T < 7.0 * T1 + 3.0 * T2 + 2.0 * T3 + T4
-        return Distance_At_Stage(T - (6.0 * T1 + 3.0 * T2 + 2.0 * T3 + T4), 13)
+        return distance_at_stage(T - (6.0 * T1 + 3.0 * T2 + 2.0 * T3 + T4), 13)
     elseif T < 7.0 * T1 + 4.0 * T2 + 2.0 * T3 + T4
-        return Distance_At_Stage(T - (7.0 * T1 + 3.0 * T2 + 2.0 * T3 + T4), 14)
+        return distance_at_stage(T - (7.0 * T1 + 3.0 * T2 + 2.0 * T3 + T4), 14)
     else
-        return Distance_At_Stage(T - (7.0 * T1 + 4.0 * T2 + 2.0 * T3 + T4), 15)
+        return distance_at_stage(T - (7.0 * T1 + 4.0 * T2 + 2.0 * T3 + T4), 15)
     end
 end
 
 """
-    Crackle_At_Time(profile::FeedrateProfile, T, max_crackle)
+    crackle_at_time(profile::FeedrateProfile, T, max_crackle)
 
 Returns the crackle at a specific time `T` within a feedrate profile. The crackle will
 be either `+max_crackle`, `-max_crackle`, or zero.
 
 The return value may be negative.
 """
-function Crackle_At_Time(profile::FeedrateProfile, T, max_crackle)
-    @assert T <= Total_Time(profile)
+function crackle_at_time(profile::FeedrateProfile, T, max_crackle)
+    @assert T <= total_time(profile)
 
-    if T <= Total_Time(profile.accel)
-        return Crackle_At_Time(profile.accel, T, max_crackle)
-    elseif T < Total_Time(profile.accel) + profile.coast
+    if T <= total_time(profile.accel)
+        return crackle_at_time(profile.accel, T, max_crackle)
+    elseif T < total_time(profile.accel) + profile.coast
         return 0.0
     else
-        return Crackle_At_Time(profile.decel, T - (Total_Time(profile.accel) + profile.coast), -max_crackle)
+        return crackle_at_time(profile.decel, T - (total_time(profile.accel) + profile.coast), -max_crackle)
     end
 end
 
 """
-    Snap_At_Time(profile::FeedrateProfile, T, max_crackle)
+    snap_at_time(profile::FeedrateProfile, T, max_crackle)
 
 Returns the snap at a specific time `T` within a feedrate profile. The return value may
 be negative.
 """
-function Snap_At_Time(profile::FeedrateProfile, T, max_crackle)
-    @assert T <= Total_Time(profile)
+function snap_at_time(profile::FeedrateProfile, T, max_crackle)
+    @assert T <= total_time(profile)
 
-    if T <= Total_Time(profile.accel)
-        return Snap_At_Time(profile.accel, T, max_crackle)
-    elseif T < Total_Time(profile.accel) + profile.coast
+    if T <= total_time(profile.accel)
+        return snap_at_time(profile.accel, T, max_crackle)
+    elseif T < total_time(profile.accel) + profile.coast
         return 0.0
     else
-        return Snap_At_Time(profile.decel, T - (Total_Time(profile.accel) + profile.coast), -max_crackle)
+        return snap_at_time(profile.decel, T - (total_time(profile.accel) + profile.coast), -max_crackle)
     end
 end
 
 """
-    Jerk_At_Time(profile::FeedrateProfile, T, max_crackle)
+    jerk_at_time(profile::FeedrateProfile, T, max_crackle)
 
 Returns the jerk at a specific time `T` within a feedrate profile. The return value may
 be negative.
 """
-function Jerk_At_Time(profile::FeedrateProfile, T, max_crackle)
-    @assert T <= Total_Time(profile)
+function jerk_at_time(profile::FeedrateProfile, T, max_crackle)
+    @assert T <= total_time(profile)
 
-    if T <= Total_Time(profile.accel)
-        return Jerk_At_Time(profile.accel, T, max_crackle)
-    elseif T < Total_Time(profile.accel) + profile.coast
+    if T <= total_time(profile.accel)
+        return jerk_at_time(profile.accel, T, max_crackle)
+    elseif T < total_time(profile.accel) + profile.coast
         return 0.0
     else
-        return Jerk_At_Time(profile.decel, T - (Total_Time(profile.accel) + profile.coast), -max_crackle)
+        return jerk_at_time(profile.decel, T - (total_time(profile.accel) + profile.coast), -max_crackle)
     end
 end
 
 """
-    Acceleration_At_Time(profile::FeedrateProfile, T, max_crackle)
+    acceleration_at_time(profile::FeedrateProfile, T, max_crackle)
 
 Returns the acceleration at a specific time `T` within a feedrate profile. The return
 value may be negative.
 """
-function Acceleration_At_Time(profile::FeedrateProfile, T, max_crackle)
-    @assert T <= Total_Time(profile)
+function acceleration_at_time(profile::FeedrateProfile, T, max_crackle)
+    @assert T <= total_time(profile)
 
-    if T <= Total_Time(profile.accel)
-        return Acceleration_At_Time(profile.accel, T, max_crackle)
-    elseif T < Total_Time(profile.accel) + profile.coast
+    if T <= total_time(profile.accel)
+        return acceleration_at_time(profile.accel, T, max_crackle)
+    elseif T < total_time(profile.accel) + profile.coast
         return 0.0
     else
-        return Acceleration_At_Time(profile.decel, T - (Total_Time(profile.accel) + profile.coast), -max_crackle)
+        return acceleration_at_time(profile.decel, T - (total_time(profile.accel) + profile.coast), -max_crackle)
     end
 end
 
 """
-    Velocity_At_Time(profile::FeedrateProfile, T, max_crackle, start_vel)
+    velocity_at_time(profile::FeedrateProfile, T, max_crackle, start_vel)
 
 Returns the velocity at a specific time `T` within a feedrate profile. The return value
 may be negative.
 """
-function Velocity_At_Time(profile::FeedrateProfile, T, max_crackle, start_vel)
-    mid_vel = Velocity_At_Time(profile.accel, Total_Time(profile.accel), max_crackle, start_vel)
+function velocity_at_time(profile::FeedrateProfile, T, max_crackle, start_vel)
+    mid_vel = velocity_at_time(profile.accel, total_time(profile.accel), max_crackle, start_vel)
 
-    @assert T <= Total_Time(profile)
+    @assert T <= total_time(profile)
 
-    if T <= Total_Time(profile.accel)
-        return Velocity_At_Time(profile.accel, T, max_crackle, start_vel)
-    elseif T < Total_Time(profile.accel) + profile.coast
+    if T <= total_time(profile.accel)
+        return velocity_at_time(profile.accel, T, max_crackle, start_vel)
+    elseif T < total_time(profile.accel) + profile.coast
         return mid_vel
     else
-        return Velocity_At_Time(profile.decel, T - (Total_Time(profile.accel) + profile.coast), -max_crackle, mid_vel)
+        return velocity_at_time(profile.decel, T - (total_time(profile.accel) + profile.coast), -max_crackle, mid_vel)
     end
 end
 
 """
-    Distance_At_Time(profile::FeedrateProfile, T, max_crackle, start_vel)
+    distance_at_time(profile::FeedrateProfile, T, max_crackle, start_vel)
 
 Returns the distance from the start point at a specific time `T` within a feedrate
 profile. The return value may be negative.
 """
-function Distance_At_Time(profile::FeedrateProfile, T, max_crackle, start_vel)
-    mid_vel = Velocity_At_Time(profile.accel, Total_Time(profile.accel), max_crackle, start_vel)
-    accel_dist = Distance_At_Time(profile.accel, Total_Time(profile.accel), max_crackle, start_vel)
+function distance_at_time(profile::FeedrateProfile, T, max_crackle, start_vel)
+    mid_vel = velocity_at_time(profile.accel, total_time(profile.accel), max_crackle, start_vel)
+    accel_dist = distance_at_time(profile.accel, total_time(profile.accel), max_crackle, start_vel)
     mid_dist = mid_vel * profile.coast
 
-    @assert T <= Total_Time(profile)
+    @assert T <= total_time(profile)
 
-    if T <= Total_Time(profile.accel)
-        return Distance_At_Time(profile.accel, T, max_crackle, start_vel)
-    elseif T < Total_Time(profile.accel) + profile.coast
-        return accel_dist + mid_vel * (T - Total_Time(profile.accel))
+    if T <= total_time(profile.accel)
+        return distance_at_time(profile.accel, T, max_crackle, start_vel)
+    elseif T < total_time(profile.accel) + profile.coast
+        return accel_dist + mid_vel * (T - total_time(profile.accel))
     else
         return accel_dist + mid_dist +
-               Distance_At_Time(profile.decel, T - (Total_Time(profile.accel) + profile.coast), -max_crackle, mid_vel)
+               distance_at_time(profile.decel, T - (total_time(profile.accel) + profile.coast), -max_crackle, mid_vel)
     end
 end
 
 """
-    Distance_At_Time_With_Accel_Flag(profile::FeedrateProfile, T, max_crackle, start_vel)
+    distance_at_time_with_accel_flag(profile::FeedrateProfile, T, max_crackle, start_vel)
 
 Returns the distance from the start point at a specific time `T` within a feedrate
 profile, along with a boolean indicating whether `T` is past the acceleration part.
@@ -894,32 +894,32 @@ Returns a tuple `(distance, is_past_accel_part)` where `is_past_accel_part` is `
 
 The distance value may be negative.
 """
-function Distance_At_Time_With_Accel_Flag(profile::FeedrateProfile, T, max_crackle, start_vel)
-    mid_vel = Velocity_At_Time(profile.accel, Total_Time(profile.accel), max_crackle, start_vel)
-    accel_dist = Distance_At_Time(profile.accel, Total_Time(profile.accel), max_crackle, start_vel)
+function distance_at_time_with_accel_flag(profile::FeedrateProfile, T, max_crackle, start_vel)
+    mid_vel = velocity_at_time(profile.accel, total_time(profile.accel), max_crackle, start_vel)
+    accel_dist = distance_at_time(profile.accel, total_time(profile.accel), max_crackle, start_vel)
     mid_dist = mid_vel * profile.coast
 
-    @assert T <= Total_Time(profile)
+    @assert T <= total_time(profile)
 
-    if T <= Total_Time(profile.accel)
-        return (Distance_At_Time(profile.accel, T, max_crackle, start_vel), false)
-    elseif T < Total_Time(profile.accel) + profile.coast
-        return (accel_dist + mid_vel * (T - Total_Time(profile.accel)), true)
+    if T <= total_time(profile.accel)
+        return (distance_at_time(profile.accel, T, max_crackle, start_vel), false)
+    elseif T < total_time(profile.accel) + profile.coast
+        return (accel_dist + mid_vel * (T - total_time(profile.accel)), true)
     else
         return (accel_dist + mid_dist +
-                Distance_At_Time(profile.decel, T - (Total_Time(profile.accel) + profile.coast), -max_crackle, mid_vel),
+                distance_at_time(profile.decel, T - (total_time(profile.accel) + profile.coast), -max_crackle, mid_vel),
                 true)
     end
 end
 
 """
-    Optimal_Profile_For_Distance(start_vel, distance, acceleration_max, jerk_max, snap_max, crackle_max)
+    optimal_profile_for_distance(start_vel, distance, acceleration_max, jerk_max, snap_max, crackle_max)
 
 Compute the acceleration part of a feedrate profile that has the lowest total time to
 travel the given distance without violating any of the given constraints. Note that there
 is no velocity limit here.
 """
-function Optimal_Profile_For_Distance(start_vel, distance, acceleration_max, jerk_max, snap_max, crackle_max)
+function optimal_profile_for_distance(start_vel, distance, acceleration_max, jerk_max, snap_max, crackle_max)
     D = distance
     Vs = start_vel
     Am = acceleration_max
@@ -943,7 +943,7 @@ function Optimal_Profile_For_Distance(start_vel, distance, acceleration_max, jer
             result_arr[variable] = mid
             test_profile = FeedrateProfileTimes(result_arr[1], result_arr[2], result_arr[3], result_arr[4])
 
-            if Fast_Distance_At_Max_Time(test_profile, Cm, Vs) <= D
+            if fast_distance_at_max_time(test_profile, Cm, Vs) <= D
                 lower = mid
             else
                 upper = mid
@@ -1019,23 +1019,23 @@ function Optimal_Profile_For_Distance(start_vel, distance, acceleration_max, jer
 
     # Find the appropriate case and solve
     for i in 4:-1:1
-        if i == 1 || D > Fast_Distance_At_Max_Time(cases[i], Cm, Vs)
+        if i == 1 || D > fast_distance_at_max_time(cases[i], Cm, Vs)
             return solve_distance_at_time(cases[i], i)
         end
     end
 
     # Unreachable
-    error("Unreachable state in Optimal_Profile_For_Distance")
+    error("Unreachable state in optimal_profile_for_distance")
 end
 
 """
-    Optimal_Profile_For_Delta_V(delta_v, acceleration_max, jerk_max, snap_max, crackle_max)
+    optimal_profile_for_delta_v(delta_v, acceleration_max, jerk_max, snap_max, crackle_max)
 
 Compute the acceleration part of a feedrate profile that achieves the given change in
 velocity in the lowest time without violating any of the given constraints. Note that
 there is no distance limit here.
 """
-function Optimal_Profile_For_Delta_V(delta_v, acceleration_max, jerk_max, snap_max, crackle_max)
+function optimal_profile_for_delta_v(delta_v, acceleration_max, jerk_max, snap_max, crackle_max)
     Vd = abs(delta_v)
     Am = acceleration_max
     Jm = jerk_max
@@ -1057,7 +1057,7 @@ function Optimal_Profile_For_Delta_V(delta_v, acceleration_max, jerk_max, snap_m
             result_arr[variable] = mid
             test_profile = FeedrateProfileTimes(result_arr[1], result_arr[2], result_arr[3], result_arr[4])
 
-            if Fast_Velocity_At_Max_Time(test_profile, Cm, 0.0) <= target
+            if fast_velocity_at_max_time(test_profile, Cm, 0.0) <= target
                 lower = mid
             else
                 upper = mid
@@ -1139,14 +1139,14 @@ function Optimal_Profile_For_Delta_V(delta_v, acceleration_max, jerk_max, snap_m
 end
 
 """
-    Optimal_Full_Profile(start_vel, max_vel, end_vel, distance, acceleration_max, jerk_max, snap_max, crackle_max)
+    optimal_full_profile(start_vel, max_vel, end_vel, distance, acceleration_max, jerk_max, snap_max, crackle_max)
 
 Compute the feedrate profile with the minimal time without violating the given
 constraints. Throws an error if there is no legal feedrate profile which can meet the
 given constraints, specifically regarding `end_vel` being reachable. Also throws an error
 if `start_vel` or `end_vel` are higher than `max_vel`.
 """
-function Optimal_Full_Profile(start_vel, max_vel, end_vel, distance, acceleration_max, jerk_max, snap_max, crackle_max)
+function optimal_full_profile(start_vel, max_vel, end_vel, distance, acceleration_max, jerk_max, snap_max, crackle_max)
     if max_vel < start_vel
         error("max_vel cannot be smaller than start_vel")
     end
@@ -1160,19 +1160,19 @@ function Optimal_Full_Profile(start_vel, max_vel, end_vel, distance, acceleratio
     end
 
     # Check if end_vel is reachable
-    check_profile = Optimal_Profile_For_Delta_V(start_vel - end_vel, acceleration_max, jerk_max, snap_max, crackle_max)
+    check_profile = optimal_profile_for_delta_v(start_vel - end_vel, acceleration_max, jerk_max, snap_max, crackle_max)
     check_crackle = start_vel < end_vel ? crackle_max : -crackle_max
-    profile_distance = Fast_Distance_At_Max_Time(check_profile, check_crackle, start_vel)
+    profile_distance = fast_distance_at_max_time(check_profile, check_crackle, start_vel)
 
     if distance < profile_distance
         error("end_vel is not reachable under given constraints")
     end
 
-    accel = Optimal_Profile_For_Delta_V(start_vel - max_vel, acceleration_max, jerk_max, snap_max, crackle_max)
-    decel = Optimal_Profile_For_Delta_V(end_vel - max_vel, acceleration_max, jerk_max, snap_max, crackle_max)
+    accel = optimal_profile_for_delta_v(start_vel - max_vel, acceleration_max, jerk_max, snap_max, crackle_max)
+    decel = optimal_profile_for_delta_v(end_vel - max_vel, acceleration_max, jerk_max, snap_max, crackle_max)
 
-    accel_distance = Fast_Distance_At_Max_Time(accel, crackle_max, start_vel)
-    decel_distance = Fast_Distance_At_Max_Time(decel, -crackle_max, max_vel)
+    accel_distance = fast_distance_at_max_time(accel, crackle_max, start_vel)
+    decel_distance = fast_distance_at_max_time(decel, -crackle_max, max_vel)
 
     if accel_distance + decel_distance <= distance
         coast = (distance - accel_distance - decel_distance) / max_vel
@@ -1190,11 +1190,11 @@ function Optimal_Full_Profile(start_vel, max_vel, end_vel, distance, acceleratio
                 break
             end
 
-            accel = Optimal_Profile_For_Delta_V(start_vel - mid, acceleration_max, jerk_max, snap_max, crackle_max)
-            decel = Optimal_Profile_For_Delta_V(end_vel - mid, acceleration_max, jerk_max, snap_max, crackle_max)
+            accel = optimal_profile_for_delta_v(start_vel - mid, acceleration_max, jerk_max, snap_max, crackle_max)
+            decel = optimal_profile_for_delta_v(end_vel - mid, acceleration_max, jerk_max, snap_max, crackle_max)
 
-            accel_distance = Fast_Distance_At_Max_Time(accel, crackle_max, start_vel)
-            decel_distance = Fast_Distance_At_Max_Time(decel, crackle_max, end_vel)
+            accel_distance = fast_distance_at_max_time(accel, crackle_max, start_vel)
+            decel_distance = fast_distance_at_max_time(decel, crackle_max, end_vel)
 
             if accel_distance + decel_distance <= distance
                 lower = mid
